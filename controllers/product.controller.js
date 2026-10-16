@@ -38,10 +38,40 @@ const createProduct = async (req, res) => {
 // get all products 
 
 const getAllProducts= async (req, res) => {
-     
-      const {id} = req.params;
+       
+    try {
+        
+     const {search, category} = req.query; // it reads optional parameters from url
+     let filter= {};
 
-       await Product.findById(id)
+     if(search){
+         filter.name= {
+            $regex: search, // regex search for text matching a pattern
+            $options: "i" // makes the search case-insensitive
+         }
+     }
+       
+     if(category){
+         filter.category= category
+     }
+
+     const products = await Product.find(filter)
+                          .sort({createdAt: -1});
+//  Sorts products by creation date, newest first.
+// - -1 means descending order.
+// - 1 means ascending order.
+
+   return res.status(200).json({
+      count: products.length,
+      products
+   })
+
+    } catch (error) {
+        console.log("Error while getting all products: ", error);
+        return res.status(500).json({
+            message :"Internal server error"
+        })
+    }
 }
 
 
@@ -49,7 +79,9 @@ const getAllProducts= async (req, res) => {
 
 const updateProduct= async (req, res) => {
        
-     const {id } = req.params;
+      try {
+        
+        const {id } = req.params;
      const {
             name,
             description,
@@ -76,9 +108,7 @@ const updateProduct= async (req, res) => {
         )
 
         if(!product){
-             return res.status(404).json({
-                message: "Product not found"
-             })
+             throw new Error("product not found");
         }
 
         return res.status(200).json({
@@ -86,12 +116,48 @@ const updateProduct= async (req, res) => {
             product
         })
 
+
+      } catch (error) {
+        console.log("Error while updating product: ", error);
+        return res.status(500).json({
+            message: "Internal server error"
+        })
+        
+      }
 }
 
 
 // delete product
 
+const deleteProduct= async (req, res) => {
+      
+    try {
+
+        const {id} = req.params;
+
+      const product=  await Product.findByIdAndDelete(id);
+
+      if(!product){
+         throw new Error("product not found");
+      }
+
+      return res.status(200).json({
+        message: "product delete successfully",
+        product
+      })
+        
+    } catch (error) {
+        console.log("Error while deleting product: ", error);
+        return res.status(500).json({
+             message: "Internal server error"
+        })
+    }
+}
+
 
 export {
-    createProduct
+    createProduct,
+    deleteProduct,
+    updateProduct,
+    getAllProducts,
 }
