@@ -45,7 +45,7 @@ const orderSchema= new mongoose.Schema({
 
      paymentMethod: {
          type: String,
-         deault: "COD"
+         default: "COD"
      },
 
      status: {
